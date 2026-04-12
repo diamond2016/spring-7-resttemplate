@@ -25,7 +25,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <!-- this above is separated from starter-web so we add -->
+        <!-- this below is separated from starter-web so we add -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-restclient</artifactId>
@@ -39,6 +39,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- to use Page -->    
+        <dependency>
+         <groupId>org.springframework.data</groupId>
+         <artifactId>spring-data-commons</artifactId>
         </dependency>
     </dependencies>
 
@@ -56,7 +61,7 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <!-- this is required for lombok java 23 and above. we pass ath java 25 -->
+            <!-- this is required for lombok java 23 and above. we use with java 25 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
