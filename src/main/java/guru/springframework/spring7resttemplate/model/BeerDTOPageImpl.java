@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 //  use of completely qualified names for BeerDTO is a limit of jackson deserialization when using generics
 @JsonIgnoreProperties(ignoreUnknown = true, value = "pageable") // ignore pageable in response
-public class BeerDTOPageImpl<BeerDTO> extends PageImpl<guru.springframework.spring7resttemplate.model.BeerDTO> {
+public class BeerDTOPageImpl<T> extends PageImpl<guru.springframework.spring7resttemplate.model.BeerDTO> {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public BeerDTOPageImpl(@JsonProperty("content") List<guru.springframework.spring7resttemplate.model.BeerDTO> content, 
