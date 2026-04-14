@@ -1,5 +1,6 @@
 package guru.springframework.spring7resttemplate.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 /**
  * Created by jt, Spring Framework Guru.
  */
+@AllArgsConstructor
 @Builder
 @Data
 public class BeerDTO {
