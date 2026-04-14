@@ -15,4 +15,30 @@ public class BeerClientImplTest {
     void testListBeers() {
         assertNotNull(beerClient.listBeers());
     }
+    
+    @Test
+    void testListBeersWithName() {
+        assertNotNull(beerClient.listBeers("ALE"));
+    }
+
+    @Test
+    void testListBeersWithNameAndStyle() {
+        assertNotNull(beerClient.listBeers("ALE", null));
+        assertNotNull(beerClient.listBeers("ALE", null));       
+    }
+
+    void testListBeersWithNameAndStyleAndShowInventory() {
+        assertNotNull(beerClient.listBeers("ALE", null, true));
+        assertNotNull(beerClient.listBeers("ALE", null, false));       
+    }   
+
+    void testListBeersWithNameAndStyleAndShowInventoryAndPageNumber() {
+        assertNotNull(beerClient.listBeers("ALE", null, true, 1));
+        assertNotNull(beerClient.listBeers("ALE", null, false, 1));       
+    }   
+
+    void testListBeersWithNameAndStyleAndShowInventoryAndPageNumberAndPageSize() {
+        assertNotNull(beerClient.listBeers("ALE", null, true, 1, 25));
+        assertNotNull(beerClient.listBeers("ALE", null, false, 1, 25));       
+    }
 }
