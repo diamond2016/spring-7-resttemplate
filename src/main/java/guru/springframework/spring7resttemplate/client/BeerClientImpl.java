@@ -1,5 +1,6 @@
 package guru.springframework.spring7resttemplate.client;
 
+import java.net.URI;
 import java.util.UUID;
 
 import org.springframework.boot.restclient.RestTemplateBuilder;
@@ -84,5 +85,12 @@ public class BeerClientImpl implements BeerClient {
         RestTemplate restTemplate = restTemplateBuilder.build();
         ResponseEntity<BeerDTO> response = restTemplate.getForEntity(GET_BEER_BY_ID_PATH, BeerDTO.class, beerId.toString());
         return response.getBody();
+    }
+
+    @Override
+    public BeerDTO createBeer (BeerDTO beer) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        URI uri = restTemplate.postForLocation(GET_BEER_PATH, beer);
+        return restTemplate.getForObject(uri.getPath(), BeerDTO.class);
     }
 }

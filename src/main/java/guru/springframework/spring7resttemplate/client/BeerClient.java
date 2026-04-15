@@ -18,5 +18,7 @@ public interface BeerClient {
     // beerName and beerStyle and showInventory are optional query parameters, and so pageNumber and pageSize are optional pagination parameters, so we can pass null or empty string to get all beers
 
     BeerDTO getBeerById(UUID beerId);
+
+    BeerDTO createBeer(BeerDTO beerDTO);
 }
 
