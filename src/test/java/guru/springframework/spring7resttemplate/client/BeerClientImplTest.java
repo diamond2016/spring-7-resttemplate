@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+
+import guru.springframework.spring7resttemplate.model.BeerDTO;
 
 @SpringBootTest
 public class BeerClientImplTest {
@@ -40,5 +43,13 @@ public class BeerClientImplTest {
     void testListBeersWithNameAndStyleAndShowInventoryAndPageNumberAndPageSize() {
         assertNotNull(beerClient.listBeers("ALE", null, true, 1, 25));
         assertNotNull(beerClient.listBeers("ALE", null, false, 1, 25));       
+    }
+
+    @Test
+    void testGetBeerById() {
+        Page<BeerDTO> beerDTOs = beerClient.listBeers();
+        BeerDTO beer = beerDTOs.getContent().get(0);
+        BeerDTO beerById = beerClient.getBeerById(beer.getId());
+        assertNotNull(beerById);
     }
 }

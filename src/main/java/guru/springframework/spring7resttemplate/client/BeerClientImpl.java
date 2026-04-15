@@ -1,5 +1,7 @@
 package guru.springframework.spring7resttemplate.client;
 
+import java.util.UUID;
+
 import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +23,8 @@ public class BeerClientImpl implements BeerClient {
     private final RestTemplateBuilder restTemplateBuilder;
   
      // Base URL for the Beer API
-    private static final String GET_BEER_PATH = "/api/v1/beer";   
+    private static final String GET_BEER_PATH = "/api/v1/beer";
+    private static final String GET_BEER_BY_ID_PATH = "/api/v1/beer/{beerId}";   
     
     @Override
     public Page<BeerDTO> listBeers(String beerName, BeerStyle beerStyle, Boolean showInventory, Integer pageNumber, Integer pageSize) {
@@ -74,5 +77,12 @@ public class BeerClientImpl implements BeerClient {
     @Override
     public Page<BeerDTO> listBeers(String beerName, BeerStyle beerStyle, Boolean showInventory, Integer pageNumber) {
         return listBeers(beerName, beerStyle, showInventory, pageNumber, null);
+    }
+
+    @Override
+    public BeerDTO getBeerById(UUID beerId) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        ResponseEntity<BeerDTO> response = restTemplate.getForEntity(GET_BEER_BY_ID_PATH, BeerDTO.class, beerId.toString());
+        return response.getBody();
     }
 }
