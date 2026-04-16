@@ -90,7 +90,22 @@ public class BeerClientImpl implements BeerClient {
     @Override
     public BeerDTO createBeer (BeerDTO beer) {
         RestTemplate restTemplate = restTemplateBuilder.build();
-        URI uri = restTemplate.postForLocation(GET_BEER_PATH, beer);
+        URI uri = restTemplate.postForLocation(GET_BEER_PATH, beer); // uri of the object created
         return restTemplate.getForObject(uri.getPath(), BeerDTO.class);
+    }
+
+    @Override
+    public BeerDTO updateBeer(BeerDTO beerDTO) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        // in this case 204 is returned but no content, so no ResponseEntity is needed
+        restTemplate.put(GET_BEER_BY_ID_PATH, beerDTO, beerDTO.getId());
+        return getBeerById(beerDTO.getId());
+    }
+
+    @Override
+    public void deleteBeer(UUID beerId) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        restTemplate.delete(GET_BEER_BY_ID_PATH, beerId.toString());
+        // in this case we do not return the deleted object, but we could return a boolean to indicate if the deletion was successful or not, but in this case we assume that if no exception is thrown, the deletion was successful
     }
 }

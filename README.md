@@ -16,3 +16,4 @@ It uses java 25 and Spring Boot 7.
 12.04.2026: passing from java 21 to java 25 and adding a client to call previously created REST API (spring-7-rest) using RestTemplate.
 12.04.2026: adding a test for the client created in the previous commit. `mvn -Dtest=BeerClientImplTest test` (requires the spring-7-rest application to be running on port 8080, in my case in folder sjdpa-spring-data-rest)
 15.04.2025 list with query parameters and get by id, post (create)
+16.04.2026 updateBeer (put) and deleteBeer (delete)
