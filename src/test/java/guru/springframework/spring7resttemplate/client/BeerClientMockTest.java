@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -42,7 +42,7 @@ public class BeerClientMockTest {
     @Mock
     private ObjectMapper objectMapper;
     
-    private BeerClientImpl beerClient;
+    private BeerClient beerClient;
     private static final String URL = "http://localhost:8080";
     private static final String GET_BEER_PATH = "/api/v1/beer";
         
@@ -74,7 +74,7 @@ public class BeerClientMockTest {
         
         // Mock RestTemplate behavior: when getForEntity is called with specific URI, return our page
         when(restTemplate.getForEntity(eq(uriString), eq(BeerDTOPageImpl.class)))
-                .thenReturn(ResponseEntity.ok(expectedPage));
+            .thenReturn(ResponseEntity.ok(expectedPage));
         
         // Act: Call the method under test
         Page<BeerDTO> result = beerClient.listBeers();
@@ -87,5 +87,37 @@ public class BeerClientMockTest {
         
         // Verify: Ensure RestTemplate was called correctly
         verify(restTemplate).getForEntity(eq(uriString), eq(BeerDTOPageImpl.class));
+    }
+
+    @Test
+    void testGetBeerById() throws Exception {
+        // Arrange: Create test data              
+        UUID randomId = UUID.randomUUID();
+        BeerDTO beerDTO = BeerDTO.builder()
+                .id(randomId)
+                .beerName("Test Beer mock with id")
+                .beerStyle(BeerStyle.IPA)
+                .upc("123456789012")
+                .price(new BigDecimal("10.99"))
+                .quantityOnHand(100)
+                .build();
+        
+        String path = GET_BEER_PATH + "/{beerId}";
+        
+        // Mock RestTemplate: getForObject with 3 arguments (url, class, uriVariables)
+        when(restTemplate.getForObject(eq(path), eq(BeerDTO.class), eq(randomId.toString())))
+                .thenReturn(beerDTO);
+        
+        // Act
+        BeerDTO result = beerClient.getBeerById(randomId);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(randomId, result.getId());
+        assertEquals("Test Beer mock with id", result.getBeerName());
+        assertEquals(BeerStyle.IPA, result.getBeerStyle());
+        
+        // Verify
+        verify(restTemplate).getForObject(eq(path), eq(BeerDTO.class), eq(randomId.toString()));
     }
 }
