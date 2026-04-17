@@ -2,8 +2,8 @@ package guru.springframework.spring7resttemplate.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -24,6 +24,7 @@ public class BeerClientImplTest {
     @Test
     void testListBeers() {
         assertNotNull(beerClient.listBeers());
+        assertTrue(beerClient.listBeers().getContent().size() > 0);
     }
     
     @Test
