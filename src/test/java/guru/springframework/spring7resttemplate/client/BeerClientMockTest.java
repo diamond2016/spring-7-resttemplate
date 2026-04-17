@@ -48,6 +48,7 @@ public class BeerClientMockTest {
         
     @BeforeEach
     void setup() {
+        // setup mocks
         // When builder.build() is called, return our mocked RestTemplate
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
         
