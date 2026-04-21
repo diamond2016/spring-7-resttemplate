@@ -2,9 +2,11 @@
 
 # spring-7-resttemplate
 
-This repository is to follw the example application in course [Spring Framework 7 - Beginner to Guru](https://www.udemy.com/course/spring-framework-7-beginner-to-guru/?referralCode=2BD0B7B7B6B511D699A9) online course
+This repository is to follow the example application in course [Spring Framework 7 - Beginner to Guru](https://www.udemy.com/course/spring-framework-7-beginner-to-guru/?referralCode=2BD0B7B7B6B511D699A9) online course
 
 It uses java 25 and Spring Boot 7.
+
+This repo has its own customization with respect to the forked one.
 
 ## Connect with Spring Framework Guru
 
