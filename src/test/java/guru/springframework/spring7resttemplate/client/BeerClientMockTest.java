@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,7 +46,8 @@ public class BeerClientMockTest {
     private BeerClient beerClient;
     private static final String URL = "http://localhost:8080";
     private static final String GET_BEER_PATH = "/api/v1/beer";
-        
+    private static final String GET_BEER_BY_ID_PATH = "/api/v1/beer/{beerId}";
+
     @BeforeEach
     void setup() {
         // setup mocks
@@ -92,32 +94,61 @@ public class BeerClientMockTest {
     @Test
     void testGetBeerById() throws Exception {
         // Arrange: Create test data              
-        UUID randomId = UUID.randomUUID();
-        BeerDTO beerDTO = BeerDTO.builder()
-                .id(randomId)
-                .beerName("Test Beer mock with id")
-                .beerStyle(BeerStyle.IPA)
-                .upc("123456789012")
-                .price(new BigDecimal("10.99"))
-                .quantityOnHand(100)
-                .build();
-        
-        String path = GET_BEER_PATH + "/{beerId}";
-        
-        // Mock RestTemplate: getForObject with 3 arguments (url, class, uriVariables)
-        when(restTemplate.getForObject(eq(path), eq(BeerDTO.class), eq(randomId.toString())))
+        BeerDTO beerDTO = getBeerDTO();
+
+        // Mock RestTemplate: getForObject with path template and vararg (matches implementation)
+        when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
                 .thenReturn(beerDTO);
         
         // Act
-        BeerDTO result = beerClient.getBeerById(randomId);
+        BeerDTO result = beerClient.getBeerById(beerDTO.getId());
         
         // Assert
         assertNotNull(result);
-        assertEquals(randomId, result.getId());
-        assertEquals("Test Beer mock with id", result.getBeerName());
+        assertEquals(beerDTO.getId(), result.getId());
+        assertEquals("Test Beer mock", result.getBeerName());
         assertEquals(BeerStyle.IPA, result.getBeerStyle());
         
         // Verify
-        verify(restTemplate).getForObject(eq(path), eq(BeerDTO.class), eq(randomId.toString()));
+        verify(restTemplate).getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString()));
     }
+
+    @Test
+    void testCreateBeer() throws Exception {
+        // Arrange: Create test data              
+        BeerDTO beerDTO = getBeerDTO();
+        URI createdUri = UriComponentsBuilder.fromPath(GET_BEER_BY_ID_PATH).build(beerDTO.getId());
+        
+        // Mock postForLocation to return the URI where the created resource can be accessed
+        when(restTemplate.postForLocation(eq(GET_BEER_PATH), eq(beerDTO)))
+                .thenReturn(createdUri);
+        
+        // Mock RestTemplate: getForObject with the resolved path
+        when(restTemplate.getForObject(eq(createdUri.getPath()), eq(BeerDTO.class)))
+                .thenReturn(beerDTO);
+    
+        // Act
+        BeerDTO result = beerClient.createBeer(beerDTO);
+        
+        // Assert
+        assertNotNull(result);
+        assertEquals(beerDTO.getId(), result.getId());
+
+        // Verify
+        verify(restTemplate).postForLocation(eq(GET_BEER_PATH), eq(beerDTO));
+        verify(restTemplate).getForObject(eq(createdUri.getPath()), eq(BeerDTO.class));
+    }
+
+    private BeerDTO getBeerDTO() {
+        BeerDTO beerDTO = BeerDTO.builder()
+            .id(UUID.randomUUID())
+            .beerName("Test Beer mock")
+            .beerStyle(BeerStyle.IPA)
+            .upc("123456789012")
+            .price(new BigDecimal("10.99"))
+            .quantityOnHand(100)
+            .build();
+        
+        return beerDTO;
+        }
 }
