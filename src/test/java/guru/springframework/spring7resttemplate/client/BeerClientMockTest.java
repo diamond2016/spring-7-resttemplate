@@ -48,6 +48,8 @@ public class BeerClientMockTest {
     private static final String GET_BEER_PATH = "/api/v1/beer";
     private static final String GET_BEER_BY_ID_PATH = "/api/v1/beer/{beerId}";
 
+    private BeerDTO beerDTO;
+
     @BeforeEach
     void setup() {
         // setup mocks
@@ -56,18 +58,15 @@ public class BeerClientMockTest {
         
         // Create real BeerClient with mocked dependencies
         beerClient = new BeerClientImpl(restTemplateBuilder);
+
+        // create a beeDTO for calls
+        beerDTO = getBeerDTO();
     }
 
     @Test
     void testListBeers() throws Exception {
-        // Arrange: Create test data
-        BeerDTO beerDTO = BeerDTO.builder()
-                .beerName("Test Beer mock")
-                .beerStyle(BeerStyle.IPA)
-                .upc("123456789012")
-                .price(new BigDecimal("10.99"))
-                .quantityOnHand(100)
-                .build();
+        // Arrange: Create test data (setup per beerDTO)  
+
         List<BeerDTO> beerList = List.of(beerDTO);
         Pageable pageable = PageRequest.of(0, 20);
         BeerDTOPageImpl expectedPage = new BeerDTOPageImpl(beerList, pageable, 1L);
@@ -93,8 +92,7 @@ public class BeerClientMockTest {
 
     @Test
     void testGetBeerById() throws Exception {
-        // Arrange: Create test data              
-        BeerDTO beerDTO = getBeerDTO();
+        // Arrange: Create test data    (setup)          
 
         // Mock RestTemplate: getForObject with path template and vararg (matches implementation)
         when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
@@ -115,8 +113,7 @@ public class BeerClientMockTest {
 
     @Test
     void testCreateBeer() throws Exception {
-        // Arrange: Create test data              
-        BeerDTO beerDTO = getBeerDTO();
+        // Arrange: Create test data (setup per beerDTO)         
         URI createdUri = UriComponentsBuilder.fromPath(GET_BEER_BY_ID_PATH).build(beerDTO.getId());
         
         // Mock postForLocation to return the URI where the created resource can be accessed
