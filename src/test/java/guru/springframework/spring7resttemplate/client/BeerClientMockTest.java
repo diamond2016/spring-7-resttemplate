@@ -144,7 +144,7 @@ public class BeerClientMockTest {
         // Arrange: Create test data (setup per beerDTO)    
 
         // Mock restTemplate.put returns void, add doNOthing()
-        doNothing().when(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
+        // doNothing().when(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
 
         // Mock the getForObject call made by getBeerById() to return the updated beer
         when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
@@ -158,7 +158,7 @@ public class BeerClientMockTest {
         assertEquals(beerDTO.getId(), result.getId());
 
         // Verify
-        verify(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
+        verify(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId()));
         verify(restTemplate).getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString()));
 
     }
