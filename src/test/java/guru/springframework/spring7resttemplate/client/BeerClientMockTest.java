@@ -2,10 +2,8 @@ package guru.springframework.spring7resttemplate.client;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,26 +12,32 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.catalina.connector.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.boot.restclient.test.autoconfigure.AutoConfigureMockRestServiceServer;
 
 import guru.springframework.spring7resttemplate.model.BeerDTO;
 import guru.springframework.spring7resttemplate.model.BeerDTOPageImpl;
 import guru.springframework.spring7resttemplate.model.BeerStyle;
-import tools.jackson.databind.ObjectMapper;
+
 
 // Using Mockito to unit test BeerClient in isolation
+@AutoConfigureMockRestServiceServer
 @ExtendWith(MockitoExtension.class)
 public class BeerClientMockTest {
    
@@ -43,9 +47,9 @@ public class BeerClientMockTest {
     @Mock
     private RestTemplateBuilder restTemplateBuilder;
     
-    @Mock
-    private ObjectMapper objectMapper;
-    
+  
+    MockRestServiceServer server;
+
     private BeerClient beerClient;
     private static final String URL = "http://localhost:8080";
     private static final String GET_BEER_PATH = "/api/v1/beer";
@@ -64,6 +68,9 @@ public class BeerClientMockTest {
 
         // create a beeDTO for calls
         beerDTO = getBeerDTO();
+
+        // create a server for testing hht
+        server = MockRestServiceServer.bindTo(restTemplate).build();
     }
 
     @Test
@@ -143,8 +150,11 @@ public class BeerClientMockTest {
     void testUpdateBeer() throws Exception {
         // Arrange: Create test data (setup per beerDTO)    
 
-        // Mock restTemplate.put returns void, add doNOthing()
+        // Mock restTemplate.put returns void
         // doNothing().when(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
+        server.expect(method(HttpMethod.PUT))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId().toString()))
+            .andRespond(withNoContent());
 
         // Mock the getForObject call made by getBeerById() to return the updated beer
         when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
@@ -163,6 +173,21 @@ public class BeerClientMockTest {
 
     }
 
+  @Test
+    void testDeleteBeer() throws Exception {
+        // Arrange: Create test data, w can user beerDTO id
+
+        // Mock restTemplate.delete returns void
+        server.expect(method(HttpMethod.DELETE))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId().toString()))
+            .andRespond(withNoContent());
+
+        // Act
+        beerClient.deleteBeer(beerDTO.getId());
+
+        // Verify
+        verify(restTemplate).delete(eq(GET_BEER_BY_ID_PATH), eq(beerDTO.getId().toString()));
+    }
 
     private BeerDTO getBeerDTO() {
         BeerDTO beerDTO = BeerDTO.builder()
