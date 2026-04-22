@@ -2,8 +2,10 @@ package guru.springframework.spring7resttemplate.client;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.catalina.connector.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -135,6 +138,31 @@ public class BeerClientMockTest {
         verify(restTemplate).postForLocation(eq(GET_BEER_PATH), eq(beerDTO));
         verify(restTemplate).getForObject(eq(createdUri.getPath()), eq(BeerDTO.class));
     }
+
+    @Test
+    void testUpdateBeer() throws Exception {
+        // Arrange: Create test data (setup per beerDTO)    
+
+        // Mock restTemplate.put returns void, add doNOthing()
+        doNothing().when(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
+
+        // Mock the getForObject call made by getBeerById() to return the updated beer
+        when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
+            .thenReturn(beerDTO);
+
+        // Act
+        BeerDTO result = beerClient.updateBeer(beerDTO);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(beerDTO.getId(), result.getId());
+
+        // Verify
+        verify(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
+        verify(restTemplate).getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString()));
+
+    }
+
 
     private BeerDTO getBeerDTO() {
         BeerDTO beerDTO = BeerDTO.builder()
