@@ -1,11 +1,13 @@
 package guru.springframework.spring7resttemplate.client;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -17,38 +19,34 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import org.springframework.boot.restclient.RestTemplateBuilder;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.boot.restclient.RestTemplateBuilder;
-import org.springframework.boot.restclient.test.autoconfigure.AutoConfigureMockRestServiceServer;
 
 import guru.springframework.spring7resttemplate.model.BeerDTO;
 import guru.springframework.spring7resttemplate.model.BeerDTOPageImpl;
 import guru.springframework.spring7resttemplate.model.BeerStyle;
+import tools.jackson.databind.ObjectMapper;
 
-
-// Using Mockito to unit test BeerClient in isolation
-@AutoConfigureMockRestServiceServer
 @ExtendWith(MockitoExtension.class)
 public class BeerClientMockTest {
-   
-    @Mock
+
     private RestTemplate restTemplate;
-    
+
     @Mock
     private RestTemplateBuilder restTemplateBuilder;
-    
-  
-    MockRestServiceServer server;
+
+    private ObjectMapper objectMapper;
+
+    private MockRestServiceServer server;
 
     private BeerClient beerClient;
     private static final String URL = "http://localhost:8080";
@@ -59,134 +57,123 @@ public class BeerClientMockTest {
 
     @BeforeEach
     void setup() {
-        // setup mocks
-        // When builder.build() is called, return our mocked RestTemplate
+        restTemplate = new RestTemplateBuilder().rootUri(URL).build();
+        objectMapper = new ObjectMapper();
+
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
-        
-        // Create real BeerClient with mocked dependencies
+
         beerClient = new BeerClientImpl(restTemplateBuilder);
 
-        // create a beeDTO for calls
         beerDTO = getBeerDTO();
 
-        // create a server for testing hht
         server = MockRestServiceServer.bindTo(restTemplate).build();
     }
 
     @Test
     void testListBeers() throws Exception {
-        // Arrange: Create test data (setup per beerDTO)  
-
         List<BeerDTO> beerList = List.of(beerDTO);
         Pageable pageable = PageRequest.of(0, 20);
         BeerDTOPageImpl expectedPage = new BeerDTOPageImpl(beerList, pageable, 1L);
-        
-        String uriString = UriComponentsBuilder.fromPath(GET_BEER_PATH).toUriString();
-        
-        // Mock RestTemplate behavior: when getForEntity is called with specific URI, return our page
-        when(restTemplate.getForEntity(eq(uriString), eq(BeerDTOPageImpl.class)))
-            .thenReturn(ResponseEntity.ok(expectedPage));
-        
-        // Act: Call the method under test
+
+        String json = objectMapper.writeValueAsString(expectedPage);
+
+        server.expect(method(HttpMethod.GET))
+            .andExpect(requestTo(URL + GET_BEER_PATH))
+            .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+
         Page<BeerDTO> result = beerClient.listBeers();
-        
-        // Assert: Verify results
+
         assertNotNull(result);
         assertTrue(result.getContent().size() > 0);
         assertEquals(1, result.getTotalElements());
         assertEquals("Test Beer mock", result.getContent().get(0).getBeerName());
-        
-        // Verify: Ensure RestTemplate was called correctly
-        verify(restTemplate).getForEntity(eq(uriString), eq(BeerDTOPageImpl.class));
+
+        server.verify();
     }
 
     @Test
     void testGetBeerById() throws Exception {
-        // Arrange: Create test data    (setup)          
+        String json = objectMapper.writeValueAsString(beerDTO);
 
-        // Mock RestTemplate: getForObject with path template and vararg (matches implementation)
-        when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
-                .thenReturn(beerDTO);
-        
-        // Act
+        server.expect(method(HttpMethod.GET))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId()))
+            .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+
         BeerDTO result = beerClient.getBeerById(beerDTO.getId());
-        
-        // Assert
+
         assertNotNull(result);
         assertEquals(beerDTO.getId(), result.getId());
         assertEquals("Test Beer mock", result.getBeerName());
         assertEquals(BeerStyle.IPA, result.getBeerStyle());
-        
-        // Verify
-        verify(restTemplate).getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString()));
+
+        server.verify();
     }
 
     @Test
     void testCreateBeer() throws Exception {
-        // Arrange: Create test data (setup per beerDTO)         
         URI createdUri = UriComponentsBuilder.fromPath(GET_BEER_BY_ID_PATH).build(beerDTO.getId());
-        
-        // Mock postForLocation to return the URI where the created resource can be accessed
-        when(restTemplate.postForLocation(eq(GET_BEER_PATH), eq(beerDTO)))
-                .thenReturn(createdUri);
-        
-        // Mock RestTemplate: getForObject with the resolved path
-        when(restTemplate.getForObject(eq(createdUri.getPath()), eq(BeerDTO.class)))
-                .thenReturn(beerDTO);
-    
-        // Act
+
+        URI fullCreated = URI.create(URL + GET_BEER_BY_ID_PATH.replace("{beerId}", beerDTO.getId().toString()));
+        server.expect(method(HttpMethod.POST))
+            .andExpect(requestTo(URL + GET_BEER_PATH))
+            .andRespond(withStatus(org.springframework.http.HttpStatus.CREATED).location(fullCreated));
+
+        String json = objectMapper.writeValueAsString(beerDTO);
+        server.expect(method(HttpMethod.GET))
+            .andExpect(requestTo(URL + GET_BEER_BY_ID_PATH.replace("{beerId}", beerDTO.getId().toString())))
+            .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+
         BeerDTO result = beerClient.createBeer(beerDTO);
-        
-        // Assert
+
         assertNotNull(result);
         assertEquals(beerDTO.getId(), result.getId());
 
-        // Verify
-        verify(restTemplate).postForLocation(eq(GET_BEER_PATH), eq(beerDTO));
-        verify(restTemplate).getForObject(eq(createdUri.getPath()), eq(BeerDTO.class));
+        server.verify();
     }
 
     @Test
     void testUpdateBeer() throws Exception {
-        // Arrange: Create test data (setup per beerDTO)    
-
-        // Mock restTemplate.put returns void
-        // doNothing().when(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId().toString()));
         server.expect(method(HttpMethod.PUT))
-            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId().toString()))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId()))
             .andRespond(withNoContent());
 
-        // Mock the getForObject call made by getBeerById() to return the updated beer
-        when(restTemplate.getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString())))
-            .thenReturn(beerDTO);
+        String json = objectMapper.writeValueAsString(beerDTO);
+        server.expect(method(HttpMethod.GET))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId()))
+            .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
 
-        // Act
         BeerDTO result = beerClient.updateBeer(beerDTO);
 
-        // Assert
         assertNotNull(result);
         assertEquals(beerDTO.getId(), result.getId());
 
-        // Verify
-        verify(restTemplate).put(eq(GET_BEER_BY_ID_PATH), eq(beerDTO), eq(beerDTO.getId()));
-        verify(restTemplate).getForObject(eq(GET_BEER_BY_ID_PATH), eq(BeerDTO.class), eq(beerDTO.getId().toString()));
-
+        server.verify();
     }
 
-  @Test
-    void testDeleteBeer() throws Exception {
-        // Arrange: Create test data, w can user beerDTO id
+    @Test
+    void testDeleteBeer()  {
+        UUID beerId = beerDTO.getId();
 
-        // Mock restTemplate.delete returns void
         server.expect(method(HttpMethod.DELETE))
-            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerDTO.getId().toString()))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerId))
             .andRespond(withNoContent());
 
-        // Act
-        beerClient.deleteBeer(beerDTO.getId());
+        assertDoesNotThrow(() -> beerClient.deleteBeer(beerId));
 
-        // Verify
-        verify(restTemplate).delete(eq(GET_BEER_BY_ID_PATH), eq(beerDTO.getId().toString()));
+        server.verify();
+    }
+
+    @Test
+    void testDeleteNotFound() {
+        UUID beerId = beerDTO.getId();
+
+        server.expect(method(HttpMethod.DELETE))
+            .andExpect(requestToUriTemplate(URL + GET_BEER_BY_ID_PATH, beerId))
+            .andRespond(withResourceNotFound());
+
+        assertThrows(HttpClientErrorException.class, () -> beerClient.deleteBeer(beerId));
+
+        server.verify();
     }
 
     private BeerDTO getBeerDTO() {
@@ -198,7 +185,7 @@ public class BeerClientMockTest {
             .price(new BigDecimal("10.99"))
             .quantityOnHand(100)
             .build();
-        
+
         return beerDTO;
-        }
+    }
 }

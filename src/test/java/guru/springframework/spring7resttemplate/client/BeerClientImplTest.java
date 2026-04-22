@@ -100,5 +100,6 @@ public class BeerClientImplTest {
         assertThrows (HttpClientErrorException.class, () -> {
             beerClient.getBeerById(savedBeer.getId());
         });
+
     }
 }   

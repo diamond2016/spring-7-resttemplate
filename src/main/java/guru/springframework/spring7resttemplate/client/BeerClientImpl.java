@@ -104,7 +104,7 @@ public class BeerClientImpl implements BeerClient {
     @Override
     public void deleteBeer(UUID beerId) {
         RestTemplate restTemplate = restTemplateBuilder.build();
-        restTemplate.delete(GET_BEER_BY_ID_PATH, beerId.toString());
+        restTemplate.delete(GET_BEER_BY_ID_PATH, beerId);
         // in this case we do not return the deleted object, but we could return a boolean to indicate if the deletion was successful or not, but in this case we assume that if no exception is thrown, the deletion was successful
     }
 }
