@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true, value = "pageable") // ignore pageable in response
 
-public class BeerDTOPageImpl<BeerDTO> extends PageImpl<guru.springframework.spring7resttemplate.model.BeerDTO> {
+public class BeerDTOPageImpl extends PageImpl<guru.springframework.spring7resttemplate.model.BeerDTO> {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public BeerDTOPageImpl(@JsonProperty("content") List<guru.springframework.spring7resttemplate.model.BeerDTO> content, 

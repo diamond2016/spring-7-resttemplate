@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -176,6 +178,30 @@ public class BeerClientMockTest {
         server.verify();
     }
 
+    @Test
+    void testListBeersWithQueryParam() throws Exception {
+
+        String json = objectMapper.writeValueAsString(getPage());
+        URI uri = UriComponentsBuilder.fromUriString(URL + GET_BEER_PATH)
+            .queryParam("beerName", "ALE")
+            .build().toUri();
+
+        System.out.println(uri);
+
+        // when assert servet Http
+        server.expect(method(HttpMethod.GET))
+            .andExpect(requestTo(uri))
+            .andExpect(queryParam("beerName", "ALE"))
+            .andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+
+        // Act
+        Page<BeerDTO> responsePage = beerClient.listBeers("ALE");
+
+        assertEquals(responsePage.getContent().size(), 1);
+    }
+
+    // ===
+
     private BeerDTO getBeerDTO() {
         BeerDTO beerDTO = BeerDTO.builder()
             .id(UUID.randomUUID())
@@ -187,5 +213,9 @@ public class BeerClientMockTest {
             .build();
 
         return beerDTO;
+    }
+
+    private BeerDTOPageImpl getPage(){
+        return new BeerDTOPageImpl(Arrays.asList(getBeerDTO()), 1, 25, 1);
     }
 }
